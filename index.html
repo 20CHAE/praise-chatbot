@@ -1,37 +1,94 @@
 <!DOCTYPE html>
 <html lang="ko">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>칭찬봇</title>
-  <link rel="stylesheet" href="style.css">
-</head>
-<body>
-  <div class="container">
-    <!-- header -->
-    <header class="header">
-      <h1>칭찬하는 챗봇</h1>
-      <p>당신의 이야기를 들려주세요. 제가 칭찬해드릴게요!</p>
-    </header>
-
-    <!-- chatting box -->
-     <div class="chat-container">
-      <div class="chat-messages" id="chatMessages">
-        <!-- 초기 인사말 -->
-         <div class="message bot-message">
-          <div class="message-content">
-            안녕하세요! 저는 여러분을 칭찬해주는 챗봇입니다. <br>
-            오늘 있었던 일이나 고민, 무엇이든 이야기해주세요!
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>칭찬봇</title>
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="container">
+      <!-- header -->
+      <header class="header">
+        <div class="header-content">
+          <h1><i class="fas fa-heart"></i>칭찬하는 챗봇</h1>
+          <p>당신의 이야기를 들려주세요. 제가 칭찬해드릴게요!</p>
+          <div class="online-status">
+            <span class="status-dot"></span>
+            온라인
           </div>
-         </div>
+        </div>
+      </header>
+
+      <!-- chatting box -->
+      <div class="chat-container">
+        <div class="chat-messages" id="chatMessages">
+          <!-- 초기 인사말 -->
+          <div class="message bot-message">
+            <div class="message-avatar">
+              <i class="fas fa-robot"></i>
+            </div>
+            <div class="message-content">
+              <div class="message-text">
+                안녕하세요! 저는 여러분을 칭찬해주는 챗봇입니다. <br />
+                오늘 있었던 일이나 고민, 무엇이든 이야기해주세요! <br />
+                <strong>여러분은 이미 충분히 멋진 사람이에요. </strong>
+              </div>
+              <div class="message-time">방금 전</div>
+            </div>
+          </div>
+        </div>
+
+        <!--타이핑 인디케이터-->
+        <div
+          class="typing-indicator"
+          id="typingIndicator"
+          style="display: none"
+        >
+          <div class="message bot-message">
+            <div class="message-avatar">
+              <i class="fas fa-robot"></i>
+            </div>
+            <div class="message-content">
+              <div class="typing-dots">
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-     </div>
-     <!-- input box -->
+
+      <!-- input box -->
       <div class="input-container">
-        <input type="text" id="userInput" placeholder="여기에 메세지를 입력하세요..." maxlength="500">
-        <button id="sendButton">전송</button>
+        <div class="input-wrapper">
+          <input
+            type="text"
+            id="userInput"
+            placeholder="메세지를 입력하세요..."
+            maxlength="500"
+            autocomplete="off"
+          />
+          <button id="sendButton" type="button">
+            <i class="fas fa-paper-plane"></i>
+          </button>
+        </div>
+        <div class="input-info">
+          <span id="charCount">0/500</span>
+          <span class="tips">팁; enter키로도 전송가능해요.</span>
+        </div>
       </div>
-  </div>
-  <script src="script.js"></script>
-</body>
+    </div>
+
+    <!--로딩 오버레이-->
+    <div class="loading-overlay" id="loadingOverlay" style="display: none">
+      <div class="loading-content">
+        <div class="loading-spinner"></div>
+        <p>칭찬을 준비하고 있어요...</p>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
 </html>
