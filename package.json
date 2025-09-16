@@ -1,0 +1,31 @@
+{
+  "name": "praise-bot",
+  "version": "3.0.0",
+  "description": "따뜻한 칭찬을 해주는 AI 챗봇 - Google Gemini API 기반",
+  "main": "api/chat.js",
+  "scripts": {
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "chatbot",
+    "ai",
+    "gemini",
+    "praise",
+    "compliment",
+    "korean",
+    "vercel",
+    "serverless"
+  ],
+  "author": "Your Name",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/your-username/praise-bot.git"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "devDependencies": {
+    "vercel": "^32.0.0"
+  }
+}

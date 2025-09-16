@@ -17,7 +17,7 @@ document.addEventListener("DOMContentLoaded", function () {
   updateCharCount();
 });
 
-//채팅 초기화
+// 채팅 초기화
 function initializeChat() {
   userInput.focus();
   console.log("칭찬 챗봇이 준비되었습니다!");
@@ -91,7 +91,7 @@ function addBotMessage(text) {
 // 메시지 요소 생성
 function createMessageElement(text, sender) {
   const messageDiv = document.createElement("div");
-  messageDiv.className = "message ${sender}-message";
+  messageDiv.className = `message ${sender}-message`;
 
   // 아바타
   const avatar = document.createElement("div");
@@ -122,26 +122,23 @@ function createMessageElement(text, sender) {
   return messageDiv;
 }
 
-// 봇 응답 생성
+// API로 응답 생성
 async function generateBotResponse(userMessage) {
   try {
     // 타이핑 인디케이터 표시
     showTypingIndicator();
 
-    // 응답 지연 (실제 대화 느낌)
-    await delay(1500 + Math.random() * 1000);
-
-    // 칭찬 메시지 생성
-    const praise = generatePraiseMessage(userMessage);
+    // 서버 API 호출
+    const aiResponse = await callServerAPI(userMessage);
 
     // 타이핑 인디케이터 숨기기
     hideTypingIndicator();
 
-    // 챗봇 메시지 추가
-    addBotMessage(praise);
+    // AI 메시지 추가
+    addBotMessage(aiResponse);
 
-    // 추가 응답 (50%확률)
-    if (Math.random() > 0.5) {
+    // 추가 응답 (30% 확률로 줄임)
+    if (Math.random() > 0.7) {
       await delay(2000);
       showTypingIndicator();
       await delay(1000);
@@ -152,13 +149,89 @@ async function generateBotResponse(userMessage) {
     }
   } catch (error) {
     hideTypingIndicator();
-    addBotMessage("죄송해요, 지금은 응답하기 어려워요. 다시 시도해주세요!");
-    console.error("Error generating response:", error);
+    console.error("API Error:", error);
+
+    // fallback 응답 생성
+    const fallbackResponse = generateFallbackPraise(userMessage);
+
+    // 에러 메시지에 따른 다른 처리
+    let errorMessage = "현재 AI 서버 연결에 문제가 있어 기본 칭찬을 드렸어요!";
+    let showRetryButton = false;
+
+    if (error.message.includes("503") || error.message.includes("overloaded")) {
+      errorMessage = "AI가 현재 많이 바빠서 기본 칭찬을 드릴게요!";
+      showRetryButton = true;
+    } else if (error.message.includes("네트워크")) {
+      errorMessage =
+        "인터넷 연결을 확인해주세요! 지금은 기본 칭찬으로 응원할게요 📶✨";
+      showRetryButton = true;
+    }
+
+    // fallback 메시지 + 친화적 에러 설명
+    let fullMessage =
+      fallbackResponse +
+      `<br><small style="color: #666; margin-top: 8px; display: block;">${errorMessage}</small>`;
+
+    // 재시도 버튼 추가
+    if (showRetryButton) {
+      fullMessage += `<br><button onclick="retryLastMessage('${userMessage.replace(
+        /'/g,
+        "\\'"
+      )}', this)" style="margin-top: 8px; padding: 4px 8px; background: #667eea; color: white; border: none; border-radius: 12px; cursor: pointer; font-size: 11px;">🔄 AI로 다시 시도</button>`;
+    }
+
+    addBotMessage(fullMessage);
   }
 }
 
-// 칭찬 메시지 생성
-function generatePraiseMessage(userMessage) {
+// 서버 API 호출 함수 (보안 개선 + 재시도)
+async function callServerAPI(userMessage, isRetry = false) {
+  try {
+    console.log(`서버로 메시지 전송 중... ${isRetry ? "(재시도)" : ""}`);
+
+    // 재시도의 경우 조금 더 대기
+    if (isRetry) {
+      await delay(2000);
+    }
+
+    // 서버의 API 엔드포인트로 요청
+    const response = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message: userMessage,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+
+      // 503 에러인 경우 특별히 처리
+      if (response.status === 503) {
+        throw new Error(`서버가 일시적으로 과부하 상태입니다. (503)`);
+      }
+
+      throw new Error(errorData.message || `서버 오류 (${response.status})`);
+    }
+
+    const data = await response.json();
+
+    if (data.success && data.response) {
+      console.log(`AI 응답 받기 성공 ${isRetry ? "(재시도 성공!)" : ""}`);
+      return data.response;
+    } else {
+      throw new Error(data.message || "AI 응답을 받을 수 없습니다.");
+    }
+  } catch (error) {
+    console.error("API 호출 중 오류:", error);
+    throw error;
+  }
+}
+
+// 🛡️ API 오류 시 사용할 기본 칭찬 생성
+function generateFallbackPraise(userMessage) {
   const messageLength = userMessage.length;
   const wordCount = userMessage.split(" ").length;
 
@@ -182,7 +255,7 @@ function generatePraiseMessage(userMessage) {
 
   let emotionType = "general";
   for (const [emotion, keywords] of Object.entries(emotionKeywords)) {
-    if (keywords.some((keywords) => userMessage.includes(keywords))) {
+    if (keywords.some((keyword) => userMessage.includes(keyword))) {
       emotionType = emotion;
       break;
     }
@@ -219,7 +292,7 @@ function generatePraiseMessage(userMessage) {
   // 메시지 길이에 따른 추가 칭찬
   if (messageLength > 100) {
     analysisBasedPraises.push(
-      "이렇게 자세하게 이야기해주시니 정말 고마워요! 당신의 소통 능력이 훌륭해요!"
+      "이렇게 자세하게 이야기해주시니 정말 고마워요! 당신의 소통 능력이 훌륭해요! 💬✨"
     );
   }
 
@@ -304,6 +377,35 @@ function scrollToBottom() {
   }, 100);
 }
 
+// 재시도 함수
+async function retryLastMessage(message, buttonElement) {
+  try {
+    // 버튼 비활성화
+    buttonElement.disabled = true;
+    buttonElement.textContent = "⏳ 재시도 중...";
+
+    // 타이핑 인디케이터 표시
+    showTypingIndicator();
+
+    // API 재시도
+    const aiResponse = await callServerAPI(message, true);
+
+    // 성공하면 새 메시지 추가
+    hideTypingIndicator();
+    addBotMessage(
+      aiResponse + "<br><small style='color: #4caf50;'>✅ 재시도 성공!</small>"
+    );
+  } catch (error) {
+    hideTypingIndicator();
+    console.error("재시도 실패:", error);
+
+    // 재시도도 실패한 경우
+    addBotMessage(
+      "재시도도 실패했어요. 조금 더 기다려주세요! 🤗<br><small style='color: #ff6b6b;'>💔 AI 서버가 정말 바쁜가봐요</small>"
+    );
+  }
+}
+
 // 지연 함수
 function delay(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -314,7 +416,7 @@ userInput.addEventListener("keydown", function (e) {
   // ctrl + shift + D : 개발자 메시지
   if (e.ctrlKey && e.shiftKey && e.key === "D") {
     e.preventDefault();
-    addBotMessage("당신은 소중한 사람입니다. 늘 응원해요.");
+    addBotMessage("당신은 소중한 사람입니다. 늘 응원해요. 💻✨");
   }
 });
 
@@ -340,9 +442,9 @@ function hideLoading() {
 // 에러 처리
 window.addEventListener("error", function (e) {
   console.error("JavaScript Error:", e.error);
-  addBotMessage("앗! 뭔가 문제가 생겼네요. 새로고침 후 다시 시도해주세요!");
+  addBotMessage("앗! 뭔가 문제가 생겼네요. 새로고침 후 다시 시도해주세요! 🔄");
 });
 
 // 성능 모니터링
-console.log("칭찬 챗봇 v2.0 로드 완료!");
+console.log("칭찬 챗봇 v3.0 로드 완료! 🚀");
 console.log("메시지 개수:", messageCount);
